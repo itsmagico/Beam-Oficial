@@ -5,7 +5,7 @@ const app = express();
 
 app.get("/perguntar", async (req, res) => {
   const pergunta = req.query.q;
-  const key = "SUA_API_KEY_GEMINI"; // <--- Coloque aqui sua chave
+  const key = "AIzaSyC5grR_O4ioCyjAsZHPrxOlteFdNA9m4sU"; // <--- Coloque aqui sua chave
 
   try {
     const resposta = await axios.post(
