@@ -1,28 +1,29 @@
-// index.js
-const express = require("express");
-const axios = require("axios");
-const app = express();
+const { Client, GatewayIntentBits, Collection, Partials } = require("discord.js");
+const fs = require("fs");
+const config = require("./config.json");
 
-app.get("/perguntar", async (req, res) => {
-  const pergunta = req.query.q;
-  const key = "AIzaSyC5grR_O4ioCyjAsZHPrxOlteFdNA9m4sU"; // <--- Coloque aqui sua chave
-
-  try {
-    const resposta = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-      {
-        contents: [{ parts: [{ text: pergunta }] }]
-      },
-      {
-        headers: { "Content-Type": "application/json" }
-      }
-    );
-
-    const texto = resposta.data.candidates[0].content.parts[0].text;
-    res.json({ resposta: texto });
-  } catch (e) {
-    res.json({ resposta: "❌ Erro ao buscar resposta da IA." });
-  }
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-app.listen(3000, () => console.log("Servidor Gemini Proxy online"));
+client.commands = new Collection();
+
+// Carregar comandos
+fs.readdirSync("./comandos").filter(file => file.endsWith(".js")).forEach(file => {
+  const comando = require(`./comandos/${file}`);
+  client.commands.set(comando.name, comando);
+});
+
+// Carregar eventos
+fs.readdirSync("./eventos").filter(file => file.endsWith(".js")).forEach(file => {
+  const evento = require(`./eventos/${file}`);
+  const nomeEvento = file.split(".")[0];
+  client.on(nomeEvento, (...args) => evento(client, ...args));
+});
+
+client.login(config.token);
